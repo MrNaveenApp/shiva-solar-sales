@@ -320,7 +320,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
 
     const uniqueRows = [];
     const seenPhones = new Set();
-    for (const row of rows.slice(0, 50)) {
+    for (const row of rows) {
       const phone = String(row.phoneNumber || row.PhoneNumber || row.phone || row.Phone || '').trim();
       if (!phone || seenPhones.has(phone)) continue;
       seenPhones.add(phone);
