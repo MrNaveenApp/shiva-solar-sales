@@ -332,6 +332,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
         interestedStatus: 'No Response',
         feedback: '',
         uploadedBy: req.user.userId,
+        createdAt: new Date().toISOString(),
         uploadedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });

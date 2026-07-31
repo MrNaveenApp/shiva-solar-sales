@@ -13,6 +13,7 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedSales, setSelectedSales] = useState('All');
+  const [filterDate, setFilterDate] = useState('All');
   const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', password: '', role: 'SALES' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -53,14 +54,22 @@ const AdminDashboard = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const filteredContacts = contacts.filter((contact) => {
-    const matchesSearch = `${contact.customerName} ${contact.phoneNumber}`.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === 'All' || contact.interestedStatus === filterStatus;
-    const matchesSales = selectedSales === 'All'
-      || (selectedSales === 'unassigned' && !contact.assignedSalesId)
-      || contact.assignedSalesId === selectedSales;
-    return matchesSearch && matchesStatus && matchesSales;
-  });
+  const filteredContacts = contacts
+    .filter((contact) => {
+      const matchesSearch = `${contact.customerName} ${contact.phoneNumber}`.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = filterStatus === 'All' || contact.interestedStatus === filterStatus;
+      const matchesSales = selectedSales === 'All'
+        || (selectedSales === 'unassigned' && !contact.assignedSalesId)
+        || contact.assignedSalesId === selectedSales;
+      const created = contact.createdAt || contact.uploadedAt || contact.updatedAt;
+      let matchesDate = true;
+      if (filterDate !== 'All' && created) {
+        const days = filterDate === 'Today' ? 1 : filterDate === 'Last 7 Days' ? 7 : 30;
+        matchesDate = new Date(created) >= new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      }
+      return matchesSearch && matchesStatus && matchesSales && matchesDate;
+    })
+    .sort((a, b) => new Date(b.createdAt || b.uploadedAt || 0) - new Date(a.createdAt || a.uploadedAt || 0));
 
   const pagedContacts = filteredContacts.slice((page - 1) * pageSize, page * pageSize);
 
@@ -332,6 +341,15 @@ const AdminDashboard = () => {
               <MenuItem value="All">All</MenuItem>
               <MenuItem value="unassigned">Unassigned</MenuItem>
               {salesUsers.map((u) => <MenuItem key={u.userId} value={u.userId}>{displayUser(u)}</MenuItem>)}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: { xs: '100%', md: 140 } }}>
+            <InputLabel>Created</InputLabel>
+            <Select value={filterDate} label="Created" onChange={(e) => { setFilterDate(e.target.value); setPage(1); }}>
+              <MenuItem value="All">All</MenuItem>
+              <MenuItem value="Today">Today</MenuItem>
+              <MenuItem value="Last 7 Days">Last 7 Days</MenuItem>
+              <MenuItem value="Last 30 Days">Last 30 Days</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: { xs: '100%', md: 110 } }}>
