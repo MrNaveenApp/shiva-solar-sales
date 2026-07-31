@@ -31,7 +31,6 @@ const LoginPage = ({ onLogin }) => {
                   <Button variant="contained" size="large" type="submit" sx={{ py: 1.2 }}>Login</Button>
                 </Stack>
               </form>
-              <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>Demo credentials: phone 9999999999 / password admin123</Typography>
             </Stack>
           </CardContent>
         </Card>
