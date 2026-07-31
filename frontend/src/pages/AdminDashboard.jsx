@@ -496,15 +496,15 @@ const AdminDashboard = () => {
           <Typography variant="h6" gutterBottom>Current Users</Typography>
           <Stack spacing={1.5}>
             {users.map((userItem) => (
-              <Box key={userItem.userId} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fbff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>{userItem.name || userItem.phoneNumber}</Typography>
+              <Box key={userItem.userId} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fbff', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' }, justifyContent: 'space-between', gap: 1 }}>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography fontWeight={700} sx={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userItem.name || userItem.phoneNumber}</Typography>
                   <Typography color="text.secondary" sx={{ fontSize: '0.8rem' }}>{userItem.phoneNumber} • {userItem.role}</Typography>
                 </Box>
-                <Stack direction="row" spacing={1}>
-                  <Button size="small" variant="outlined" onClick={() => openReset(userItem)}>Reset Password</Button>
+                <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: 'flex-end', sm: 'auto' } }}>
+                  <Button size="small" variant="outlined" onClick={() => openReset(userItem)} sx={{ px: 1, fontSize: '0.7rem', minWidth: 0, whiteSpace: 'nowrap' }}>Reset Password</Button>
                   {userItem.phoneNumber !== loggedUser?.phoneNumber && (
-                    <Button size="small" variant="outlined" color="error" onClick={() => deleteUser(userItem)}>Delete</Button>
+                    <Button size="small" variant="outlined" color="error" onClick={() => deleteUser(userItem)} sx={{ px: 1, fontSize: '0.7rem', minWidth: 0, whiteSpace: 'nowrap' }}>Delete</Button>
                   )}
                 </Stack>
               </Box>
