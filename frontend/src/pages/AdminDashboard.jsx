@@ -290,13 +290,10 @@ const AdminDashboard = () => {
 
     return (
       <Box>
-        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'center' }} spacing={2}>
-          <Box>
-            <Typography variant="h4" fontWeight={700} gutterBottom>Contacts</Typography>
-            <Typography color="text.secondary" gutterBottom>Review and manage all assigned leads in one place.</Typography>
-          </Box>
-          <Button component={Link} to="/admin/upload" variant="outlined">Upload Contacts</Button>
-        </Stack>
+        <Box>
+          <Typography variant="h4" fontWeight={700} gutterBottom>Contacts</Typography>
+          <Typography color="text.secondary" gutterBottom>Review and manage all assigned leads in one place.</Typography>
+        </Box>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mt: 3 }}>
           <TextField label="Search" value={search} onChange={(e) => setSearch(e.target.value)} fullWidth />
