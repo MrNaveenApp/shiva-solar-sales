@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { AppBar, Box, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography, useTheme, useMediaQuery } from '@mui/material';
-import { Dashboard as DashboardIcon, Contacts as ContactsIcon, PersonAdd as PersonAddIcon, Person as PersonIcon, Logout as LogoutIcon, UploadFile as UploadFileIcon, Menu as MenuIcon } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Contacts as ContactsIcon, PersonAdd as PersonAddIcon, Person as PersonIcon, Logout as LogoutIcon, UploadFile as UploadFileIcon, Menu as MenuIcon, Group as GroupIcon } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 
 const drawerWidth = 280;
@@ -18,6 +18,7 @@ const Layout = ({ children, user, onLogout }) => {
     ? [
         { label: 'Dashboard', path: '/admin', icon: <DashboardIcon /> },
         { label: 'Contacts', path: '/admin/contacts', icon: <ContactsIcon /> },
+        { label: 'Sales Team', path: '/admin/team', icon: <GroupIcon /> },
         { label: 'Upload', path: '/admin/upload', icon: <UploadFileIcon /> },
         { label: 'Users', path: '/admin/users', icon: <PersonAddIcon /> },
         { label: 'Profile', path: '/profile', icon: <PersonIcon /> },

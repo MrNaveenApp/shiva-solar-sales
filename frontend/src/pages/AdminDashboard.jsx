@@ -269,7 +269,8 @@ const AdminDashboard = () => {
   const currentSection = location.pathname === '/admin/contacts'
     ? 'contacts' : location.pathname === '/admin/upload'
       ? 'upload' : location.pathname === '/admin/users'
-        ? 'users' : 'dashboard';
+        ? 'users' : location.pathname === '/admin/team'
+          ? 'team' : 'dashboard';
 
   const renderOverview = () => (
     <Box>
@@ -519,6 +520,39 @@ const AdminDashboard = () => {
     </Box>
   );
 
+  const renderTeam = () => {
+    const salesUsers = users.filter((u) => u.role === 'SALES');
+    const unassignedCount = contacts.filter((c) => !c.assignedSalesId).length;
+    return (
+      <Box>
+        <Typography variant="h4" fontWeight={700} gutterBottom>Sales Team</Typography>
+        <Typography color="text.secondary" gutterBottom>Customer count for each sales person</Typography>
+        <Card sx={{ mt: 3, borderRadius: 3 }}>
+          <CardContent>
+            <Stack spacing={1.5}>
+              <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>Unassigned</Typography>
+                <Chip label={`${unassignedCount} customers`} size="small" color={unassignedCount > 0 ? 'warning' : 'default'} />
+              </Box>
+              {salesUsers.map((u) => {
+                const count = contacts.filter((c) => c.assignedSalesId === u.userId).length;
+                return (
+                  <Box key={u.userId} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fbff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography fontWeight={700} sx={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.phoneNumber}</Typography>
+                      <Typography color="text.secondary" sx={{ fontSize: '0.8rem' }}>{u.phoneNumber}</Typography>
+                    </Box>
+                    <Chip label={`${count} customers`} size="small" color={count > 0 ? 'primary' : 'default'} />
+                  </Box>
+                );
+              })}
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  };
+
   const renderUsers = () => (
     <Box>
       <Typography variant="h4" fontWeight={700} gutterBottom>User Management</Typography>
@@ -568,7 +602,7 @@ const AdminDashboard = () => {
 
   return (
     <Box>
-      {currentSection === 'contacts' ? renderContacts() : currentSection === 'upload' ? renderUpload() : currentSection === 'users' ? renderUsers() : renderOverview()}
+      {currentSection === 'contacts' ? renderContacts() : currentSection === 'upload' ? renderUpload() : currentSection === 'users' ? renderUsers() : currentSection === 'team' ? renderTeam() : renderOverview()}
 
       <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)}>
         <DialogTitle>Feedback</DialogTitle>
