@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
 const STATUSES = ['Interested', 'Not Interested', 'Follow Up', 'No Response', 'Installed'];
+const CALL_STATUSES = ['Need to Call', 'Not Answered', 'Answered'];
 
 const ContactDetails = () => {
   const { phoneNumber } = useParams();
@@ -48,6 +49,16 @@ const ContactDetails = () => {
       showToast('Status updated');
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to update status', 'error');
+    }
+  };
+
+  const updateCallStatus = async (callStatus) => {
+    try {
+      await api.put(`/contacts/${phoneNumber}`, { callStatus });
+      setContact((prev) => ({ ...prev, callStatus }));
+      showToast('Call status updated');
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Failed to update call status', 'error');
     }
   };
 
@@ -166,6 +177,20 @@ const ContactDetails = () => {
                     onChange={(e) => updateStatus(e.target.value)}
                   >
                     {STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Divider />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary">Call Status</Typography>
+                <FormControl size="small" sx={{ mt: 0.5, minWidth: 180 }}>
+                  <Select
+                    value={contact.callStatus || 'Need to Call'}
+                    onChange={(e) => updateCallStatus(e.target.value)}
+                  >
+                    {CALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                   </Select>
                 </FormControl>
               </Box>

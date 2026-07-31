@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, CardContent, Stack, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import CallStatusChip from '../components/CallStatusChip';
 import api from '../api';
 
 const SalesDashboard = () => {
@@ -53,6 +54,7 @@ const SalesDashboard = () => {
           <TableHead>
             <TableRow>
               <TableCell>Customer Name</TableCell>
+              <TableCell>Call Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -64,10 +66,11 @@ const SalesDashboard = () => {
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell>{contact.customerName}</TableCell>
+                <TableCell><CallStatusChip status={contact.callStatus} /></TableCell>
               </TableRow>
             ))}
             {contacts.length === 0 && (
-              <TableRow><TableCell align="center" sx={{ py: 4 }}><Typography color="text.secondary">No assigned contacts</Typography></TableCell></TableRow>
+              <TableRow><TableCell colSpan={2} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No assigned contacts</Typography></TableCell></TableRow>
             )}
           </TableBody>
         </Table>

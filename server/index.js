@@ -330,6 +330,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
         address: String(row.address || row.Address || row.ADDRESS || '').trim(),
         assignedSalesId: '',
         interestedStatus: 'No Response',
+        callStatus: 'Need to Call',
         feedback: '',
         uploadedBy: req.user.userId,
         createdAt: new Date().toISOString(),

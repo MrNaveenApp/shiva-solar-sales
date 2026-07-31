@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, TableSortLabel, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import CallStatusChip from '../components/CallStatusChip';
 import api from '../api';
 
 const isValidPassword = (pw) => typeof pw === 'string' && pw.length >= 5 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
@@ -422,6 +423,7 @@ const AdminDashboard = () => {
                     Created At
                   </TableSortLabel>
                 </TableCell>
+                <TableCell>Call Status</TableCell>
                 <TableCell>Sales Person</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Feedback</TableCell>
@@ -444,6 +446,7 @@ const AdminDashboard = () => {
                   <TableCell>{contact.phoneNumber}</TableCell>
                   <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatTimestamp(contact.createdAt || contact.uploadedAt)}</TableCell>
+                  <TableCell><CallStatusChip status={contact.callStatus} /></TableCell>
                   <TableCell>{getSalesName(contact.assignedSalesId) || <Chip label="Unassigned" size="small" />}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} size="small" onClick={(e) => e.stopPropagation()}>
@@ -472,7 +475,7 @@ const AdminDashboard = () => {
                 </TableRow>
               ))}
               {pagedContacts.length === 0 && (
-                <TableRow><TableCell colSpan={9} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
               )}
             </TableBody>
           </Table>
