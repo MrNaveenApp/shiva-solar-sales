@@ -533,9 +533,9 @@ const AdminDashboard = () => {
         <Card sx={{ mt: 3, borderRadius: 3 }}>
           <CardContent>
             <Stack spacing={1.5}>
-              <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>Unassigned</Typography>
-                <Chip label={`${unassignedCount} customers`} size="small" color={unassignedCount > 0 ? 'warning' : 'default'} />
+                <Chip label={`${unassignedCount} customers`} size="small" sx={{ bgcolor: '#ffedd5', color: '#c2410c', fontWeight: 700 }} />
               </Box>
               {salesUsers.map((u) => {
                 const count = contacts.filter((c) => c.assignedSalesId === u.userId).length;
@@ -545,7 +545,7 @@ const AdminDashboard = () => {
                       <Typography fontWeight={700} sx={{ fontSize: '0.9rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || u.phoneNumber}</Typography>
                       <Typography color="text.secondary" sx={{ fontSize: '0.8rem' }}>{u.phoneNumber}</Typography>
                     </Box>
-                    <Chip label={`${count} customers`} size="small" color={count > 0 ? 'primary' : 'default'} />
+                    <Chip label={`${count} customers`} size="small" sx={count > 0 ? { bgcolor: '#e0f2fe', color: '#0369a1', fontWeight: 700 } : { bgcolor: '#e2e8f0', color: '#475569', fontWeight: 700 }} />
                   </Box>
                 );
               })}
