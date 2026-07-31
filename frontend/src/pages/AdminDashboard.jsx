@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api';
 
@@ -370,7 +370,9 @@ const AdminDashboard = () => {
                   </TableCell>
                   <TableCell>
                     {contact.feedback
-                      ? <Typography variant="body2" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{contact.feedback}</Typography>
+                      ? <Tooltip title={contact.feedback} arrow placement="top-start">
+                          <Typography variant="body2" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'default' }}>{contact.feedback}</Typography>
+                        </Tooltip>
                       : <Button onClick={() => openFeedback(contact.contactId, '')} size="small">Add</Button>
                     }
                     {contact.feedback && <Button onClick={() => openFeedback(contact.contactId, contact.feedback)} size="small">Edit</Button>}
