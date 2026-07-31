@@ -235,6 +235,7 @@ const AdminDashboard = () => {
           ['Interested Customers', dashboard.interestedCustomers],
           ['Not Interested Customers', dashboard.notInterestedCustomers],
           ['Follow Up Customers', dashboard.followUpCustomers],
+          ['Installed Customers', dashboard.installedCustomers],
           ['Total Sales Users', dashboard.totalSalesUsers],
         ].map(([label, value]) => (
           <Grid item xs={12} sm={6} md={3} key={label}>
@@ -306,6 +307,7 @@ const AdminDashboard = () => {
               <MenuItem value="Not Interested">Not Interested</MenuItem>
               <MenuItem value="Follow Up">Follow Up</MenuItem>
               <MenuItem value="No Response">No Response</MenuItem>
+              <MenuItem value="Installed">Installed</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: { xs: '100%', md: 220 } }}>
@@ -373,6 +375,7 @@ const AdminDashboard = () => {
                       <MenuItem value="Not Interested">Not Interested</MenuItem>
                       <MenuItem value="Follow Up">Follow Up</MenuItem>
                       <MenuItem value="No Response">No Response</MenuItem>
+                      <MenuItem value="Installed">Installed</MenuItem>
                     </Select>
                   </TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>

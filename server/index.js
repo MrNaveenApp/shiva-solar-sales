@@ -421,6 +421,7 @@ app.get('/dashboard', authMiddleware, roleMiddleware(['ADMIN']), async (req, res
       interestedCustomers: allContacts.filter((c) => c.interestedStatus === 'Interested').length,
       notInterestedCustomers: allContacts.filter((c) => c.interestedStatus === 'Not Interested').length,
       followUpCustomers: allContacts.filter((c) => c.interestedStatus === 'Follow Up').length,
+      installedCustomers: allContacts.filter((c) => c.interestedStatus === 'Installed').length,
       totalSalesUsers: allUsers.filter((u) => u.role === 'SALES').length,
     });
   } catch (error) {

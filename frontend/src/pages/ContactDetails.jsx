@@ -4,7 +4,7 @@ import { ArrowBack as ArrowBackIcon, Call as CallIcon, Delete as DeleteIcon, Edi
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
-const STATUSES = ['Interested', 'Not Interested', 'Follow Up', 'No Response'];
+const STATUSES = ['Interested', 'Not Interested', 'Follow Up', 'No Response', 'Installed'];
 
 const ContactDetails = () => {
   const { phoneNumber } = useParams();

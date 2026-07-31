@@ -84,6 +84,7 @@ const SalesDashboard = () => {
                     <MenuItem value="Not Interested">Not Interested</MenuItem>
                     <MenuItem value="Follow Up">Follow Up</MenuItem>
                     <MenuItem value="No Response">No Response</MenuItem>
+                    <MenuItem value="Installed">Installed</MenuItem>
                   </Select>
                 </TableCell>
               </TableRow>
