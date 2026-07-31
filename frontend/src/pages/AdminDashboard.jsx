@@ -3,6 +3,9 @@ import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, Grid, Snackbar, 
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api';
 
+const isValidPassword = (pw) => typeof pw === 'string' && pw.length >= 5 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
+const PASSWORD_ERROR = 'Password must be at least 5 characters and contain both letters and numbers';
+
 const AdminDashboard = () => {
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
@@ -22,6 +25,10 @@ const AdminDashboard = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [editOpen, setEditOpen] = useState(false);
   const [editContact, setEditContact] = useState({ contactId: '', customerName: '', phoneNumber: '' });
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [userError, setUserError] = useState('');
   const location = useLocation();
 
   const fetchData = async () => {
@@ -53,6 +60,11 @@ const AdminDashboard = () => {
   const pagedContacts = filteredContacts.slice((page - 1) * 20, page * 20);
 
   const createUser = async () => {
+    if (!isValidPassword(newUser.password)) {
+      setUserError(PASSWORD_ERROR);
+      return;
+    }
+    setUserError('');
     try {
       const { data } = await api.post('/users', newUser);
       setUsers((prev) => [...prev, data.user]);
@@ -60,7 +72,7 @@ const AdminDashboard = () => {
       setSuccessMsg('User created successfully');
       setSuccessOpen(true);
     } catch (error) {
-      console.error(error);
+      setUserError(error.response?.data?.message || 'Failed to create user');
     }
   };
 
@@ -149,6 +161,29 @@ const AdminDashboard = () => {
       setSuccessOpen(true);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const openReset = (user) => {
+    setResetTarget(user);
+    setResetPassword('');
+    setUserError('');
+    setResetOpen(true);
+  };
+
+  const saveReset = async () => {
+    if (!isValidPassword(resetPassword)) {
+      setUserError(PASSWORD_ERROR);
+      return;
+    }
+    setUserError('');
+    try {
+      await api.post('/users/reset-password', { phone: resetTarget.phoneNumber, newPassword: resetPassword });
+      setResetOpen(false);
+      setSuccessMsg('Password reset successfully');
+      setSuccessOpen(true);
+    } catch (error) {
+      setUserError(error.response?.data?.message || 'Failed to reset password');
     }
   };
 
@@ -378,12 +413,13 @@ const AdminDashboard = () => {
         <CardContent>
           <Typography variant="h6" gutterBottom>Create Sales User</Typography>
           <Stack spacing={2}>
-            <TextField label="Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} autoComplete="off" required />
-            <TextField label="Phone Number" value={newUser.phoneNumber} onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })} autoComplete="off" required />
-            <TextField label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} autoComplete="new-password" required />
+            {userError && <Alert severity="error" sx={{ py: 0.5, '& .MuiAlert-message': { fontSize: '0.8rem' } }}>{userError}</Alert>}
+            <TextField label="Name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} autoComplete="off" required size="small" />
+            <TextField label="Phone Number" value={newUser.phoneNumber} onChange={(e) => setNewUser({ ...newUser, phoneNumber: e.target.value })} autoComplete="off" required size="small" />
+            <TextField label="Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} autoComplete="new-password" required size="small" helperText="Min 5 characters, must include letters and numbers" />
             <FormControl>
               <InputLabel>Role</InputLabel>
-              <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}>
+              <Select value={newUser.role} label="Role" onChange={(e) => setNewUser({ ...newUser, role: e.target.value })} size="small">
                 <MenuItem value="SALES">Sales</MenuItem>
                 <MenuItem value="ADMIN">Admin</MenuItem>
               </Select>
@@ -397,9 +433,12 @@ const AdminDashboard = () => {
           <Typography variant="h6" gutterBottom>Current Users</Typography>
           <Stack spacing={1.5}>
             {users.map((userItem) => (
-              <Box key={userItem.userId} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fbff' }}>
-                <Typography fontWeight={700}>{userItem.name || userItem.phoneNumber}</Typography>
-                <Typography color="text.secondary">{userItem.phoneNumber} • {userItem.role}</Typography>
+              <Box key={userItem.userId} sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#f8fbff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>{userItem.name || userItem.phoneNumber}</Typography>
+                  <Typography color="text.secondary" sx={{ fontSize: '0.8rem' }}>{userItem.phoneNumber} • {userItem.role}</Typography>
+                </Box>
+                <Button size="small" variant="outlined" onClick={() => openReset(userItem)}>Reset Password</Button>
               </Box>
             ))}
           </Stack>
@@ -427,13 +466,28 @@ const AdminDashboard = () => {
         <DialogTitle>Edit Contact</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField label="Customer Name" value={editContact.customerName} onChange={(e) => setEditContact({ ...editContact, customerName: e.target.value })} fullWidth />
-            <TextField label="Phone Number" value={editContact.phoneNumber} onChange={(e) => setEditContact({ ...editContact, phoneNumber: e.target.value })} fullWidth />
+            <TextField label="Customer Name" value={editContact.customerName} onChange={(e) => setEditContact({ ...editContact, customerName: e.target.value })} fullWidth size="small" />
+            <TextField label="Phone Number" value={editContact.phoneNumber} onChange={(e) => setEditContact({ ...editContact, phoneNumber: e.target.value })} fullWidth size="small" />
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={saveEdit}>Save</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={resetOpen} onClose={() => setResetOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Reset Password</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">Resetting password for <strong>{resetTarget?.name || resetTarget?.phoneNumber}</strong></Typography>
+            {userError && <Alert severity="error" sx={{ py: 0.5, '& .MuiAlert-message': { fontSize: '0.8rem' } }}>{userError}</Alert>}
+            <TextField label="New Password" type="password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} fullWidth size="small" helperText="Min 5 characters, must include letters and numbers" />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={saveReset}>Reset</Button>
         </DialogActions>
       </Dialog>
 

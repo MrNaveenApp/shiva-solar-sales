@@ -91,6 +91,11 @@ const putUser = async (user) => {
   return user;
 };
 
+// ── Password validation ───────────────────────────────────────
+
+const isValidPassword = (pw) => typeof pw === 'string' && pw.length >= 5 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
+const PASSWORD_ERROR = 'Password must be at least 5 characters and contain both letters and numbers';
+
 // ── Contact DynamoDB helpers ──────────────────────────────────
 
 const getAllContacts = async () => {
@@ -189,6 +194,7 @@ const roleMiddleware = (roles) => (req, res, next) => {
 app.post('/login', async (req, res) => {
   const phoneValue = req.body.phoneNumber || req.body.phone;
   const { password } = req.body;
+  if (password && !isValidPassword(password)) return res.status(400).json({ message: PASSWORD_ERROR });
   try {
     const user = await getUserByPhone(phoneValue);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
@@ -210,6 +216,7 @@ app.post('/users', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) =
   const phoneValue = req.body.phoneNumber || req.body.phone;
   const { password, role = 'SALES', name = '' } = req.body;
   if (!name || !phoneValue || !password) return res.status(400).json({ message: 'Name, phone, and password are required' });
+  if (!isValidPassword(password)) return res.status(400).json({ message: PASSWORD_ERROR });
   try {
     const existing = await getUserByPhone(phoneValue);
     if (existing) return res.status(409).json({ message: 'User already exists' });
@@ -227,6 +234,22 @@ app.post('/users', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) =
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to create user', error: error.message });
+  }
+});
+
+app.post('/users/reset-password', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+  const { phone, newPassword } = req.body;
+  if (!phone || !newPassword) return res.status(400).json({ message: 'Phone and new password are required' });
+  if (!isValidPassword(newPassword)) return res.status(400).json({ message: PASSWORD_ERROR });
+  try {
+    const user = await getUserByPhone(phone);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.password = bcrypt.hashSync(newPassword, 10);
+    await putUser(user);
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to reset password', error: error.message });
   }
 });
 
