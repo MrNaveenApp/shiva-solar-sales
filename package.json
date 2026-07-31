@@ -1,0 +1,13 @@
+{
+  "name": "sales-crm",
+  "private": true,
+  "workspaces": ["frontend", "server"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace server\" \"npm run dev --workspace frontend\"",
+    "build": "npm run build --workspace frontend",
+    "start": "npm run start --workspace server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}

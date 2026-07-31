@@ -1,0 +1,4 @@
+node_modules
+frontend/dist
+server/uploads
+.env
