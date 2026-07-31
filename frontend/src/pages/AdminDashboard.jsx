@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, TableSortLabel, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [selectedSales, setSelectedSales] = useState('All');
   const [filterDate, setFilterDate] = useState('All');
+  const [sortConfig, setSortConfig] = useState(null);
   const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', password: '', role: 'SALES' });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -54,24 +55,31 @@ const AdminDashboard = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  const filteredContacts = contacts
-    .filter((contact) => {
-      const matchesSearch = `${contact.customerName} ${contact.phoneNumber}`.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = filterStatus === 'All' || contact.interestedStatus === filterStatus;
-      const matchesSales = selectedSales === 'All'
-        || (selectedSales === 'unassigned' && !contact.assignedSalesId)
-        || contact.assignedSalesId === selectedSales;
-      const created = contact.createdAt || contact.uploadedAt || contact.updatedAt;
-      let matchesDate = true;
-      if (filterDate !== 'All' && created) {
-        const days = filterDate === 'Today' ? 1 : filterDate === 'Last 7 Days' ? 7 : 30;
-        matchesDate = new Date(created) >= new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      }
-      return matchesSearch && matchesStatus && matchesSales && matchesDate;
-    })
-    .sort((a, b) => new Date(b.createdAt || b.uploadedAt || 0) - new Date(a.createdAt || a.uploadedAt || 0));
+  const filteredContacts = contacts.filter((contact) => {
+    const matchesSearch = `${contact.customerName} ${contact.phoneNumber}`.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = filterStatus === 'All' || contact.interestedStatus === filterStatus;
+    const matchesSales = selectedSales === 'All'
+      || (selectedSales === 'unassigned' && !contact.assignedSalesId)
+      || contact.assignedSalesId === selectedSales;
+    const created = contact.createdAt || contact.uploadedAt || contact.updatedAt;
+    let matchesDate = true;
+    if (filterDate !== 'All' && created) {
+      const days = filterDate === 'Today' ? 1 : filterDate === 'Last 7 Days' ? 7 : 30;
+      matchesDate = new Date(created) >= new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+    }
+    return matchesSearch && matchesStatus && matchesSales && matchesDate;
+  });
 
-  const pagedContacts = filteredContacts.slice((page - 1) * pageSize, page * pageSize);
+  const sortedContacts = sortConfig
+    ? [...filteredContacts].sort((a, b) => {
+        const av = a[sortConfig.field] || a.uploadedAt || '';
+        const bv = b[sortConfig.field] || b.uploadedAt || '';
+        const cmp = String(av).localeCompare(String(bv));
+        return sortConfig.dir === 'asc' ? cmp : -cmp;
+      })
+    : filteredContacts;
+
+  const pagedContacts = sortedContacts.slice((page - 1) * pageSize, page * pageSize);
 
   const createUser = async () => {
     if (!isValidPassword(newUser.password)) {
@@ -162,6 +170,21 @@ const AdminDashboard = () => {
   const toggleContactSelection = (phone) => {
     setSelectedPhones((prev) =>
       prev.includes(phone) ? prev.filter((p) => p !== phone) : [...prev, phone]
+    );
+  };
+
+  const formatTimestamp = (ts) => {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const handleSort = (field) => {
+    setSortConfig((prev) =>
+      prev?.field === field
+        ? { field, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+        : { field, dir: 'desc' }
     );
   };
 
@@ -389,6 +412,15 @@ const AdminDashboard = () => {
                 <TableCell>Customer Name</TableCell>
                 <TableCell>Phone Number</TableCell>
                 <TableCell>Address</TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortConfig?.field === 'createdAt'}
+                    direction={sortConfig?.field === 'createdAt' ? sortConfig.dir : 'desc'}
+                    onClick={() => handleSort('createdAt')}
+                  >
+                    Created At
+                  </TableSortLabel>
+                </TableCell>
                 <TableCell>Sales Person</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Feedback</TableCell>
@@ -410,6 +442,7 @@ const AdminDashboard = () => {
                   <TableCell>{contact.customerName}</TableCell>
                   <TableCell>{contact.phoneNumber}</TableCell>
                   <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
+                  <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatTimestamp(contact.createdAt || contact.uploadedAt)}</TableCell>
                   <TableCell>{getSalesName(contact.assignedSalesId) || <Chip label="Unassigned" size="small" />}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} size="small" onClick={(e) => e.stopPropagation()}>
@@ -438,7 +471,7 @@ const AdminDashboard = () => {
                 </TableRow>
               ))}
               {pagedContacts.length === 0 && (
-                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
               )}
             </TableBody>
           </Table>
