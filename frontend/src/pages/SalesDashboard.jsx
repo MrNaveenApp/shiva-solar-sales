@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Card, CardContent, Stack, Typography, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
+import { Box, Card, CardContent, Stack, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
@@ -20,19 +20,10 @@ const SalesDashboard = () => {
     fetchContacts();
   }, []);
 
-  const updateContact = async (phone, updates) => {
-    try {
-      await api.put(`/contacts/${phone}`, updates);
-      fetchContacts();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
     <Box>
       <Typography variant="h4" fontWeight={700} gutterBottom>Sales Dashboard</Typography>
-      <Typography color="text.secondary" gutterBottom>View your assigned contacts and update outcomes</Typography>
+      <Typography color="text.secondary" gutterBottom>Tap a contact to view details and update</Typography>
 
       <Card sx={{ mt: 2, borderRadius: 3, background: '#FFF7ED' }}>
         <CardContent>
@@ -61,10 +52,7 @@ const SalesDashboard = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Phone Number</TableCell>
-              <TableCell>Address</TableCell>
-              <TableCell>Interested Status</TableCell>
+              <TableCell>Customer Name</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -76,19 +64,11 @@ const SalesDashboard = () => {
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell>{contact.customerName}</TableCell>
-                <TableCell>{contact.phoneNumber}</TableCell>
-                <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} onClick={(e) => e.stopPropagation()} size="small">
-                    <MenuItem value="Interested">Interested</MenuItem>
-                    <MenuItem value="Not Interested">Not Interested</MenuItem>
-                    <MenuItem value="Follow Up">Follow Up</MenuItem>
-                    <MenuItem value="No Response">No Response</MenuItem>
-                    <MenuItem value="Installed">Installed</MenuItem>
-                  </Select>
-                </TableCell>
               </TableRow>
             ))}
+            {contacts.length === 0 && (
+              <TableRow><TableCell align="center" sx={{ py: 4 }}><Typography color="text.secondary">No assigned contacts</Typography></TableCell></TableRow>
+            )}
           </TableBody>
         </Table>
       </Paper>
