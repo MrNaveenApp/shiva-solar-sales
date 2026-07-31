@@ -108,9 +108,9 @@ const getAllContacts = async () => {
   }
 };
 
-const getContactById = async (contactId) => {
+const getContactByPhone = async (phoneNumber) => {
   try {
-    const result = await dynamodb.get({ TableName: CONTACTS_TABLE, Key: { contactId } }).promise();
+    const result = await dynamodb.get({ TableName: CONTACTS_TABLE, Key: { phoneNumber: String(phoneNumber) } }).promise();
     return result.Item || null;
   } catch (error) {
     if (error.code === 'ResourceNotFoundException') return null;
@@ -128,7 +128,7 @@ const putContactsBatch = async (items) => {
   }
 };
 
-const updateContactById = async (contactId, updates) => {
+const updateContactByPhone = async (phoneNumber, updates) => {
   const exprParts = [];
   const exprNames = {};
   const exprValues = {};
@@ -141,7 +141,7 @@ const updateContactById = async (contactId, updates) => {
   });
   const result = await dynamodb.update({
     TableName: CONTACTS_TABLE,
-    Key: { contactId },
+    Key: { phoneNumber: String(phoneNumber) },
     UpdateExpression: `SET ${exprParts.join(', ')}`,
     ExpressionAttributeNames: exprNames,
     ExpressionAttributeValues: exprValues,
@@ -296,25 +296,31 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
       return res.status(400).json({ message: 'Unsupported file format' });
     }
 
-    const extracted = rows.slice(0, 50).map((row) => ({
-      contactId: uuidv4(),
-      customerName: row.customerName || row.CustomerName || row.name || row.Name || 'Unnamed Contact',
-      phoneNumber: String(row.phoneNumber || row.PhoneNumber || row.phone || row.Phone || '').trim(),
-      address: String(row.address || row.Address || row.ADDRESS || '').trim(),
-      assignedSalesId: '',
-      interestedStatus: 'No Response',
-      feedback: '',
-      uploadedBy: req.user.userId,
-      uploadedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }));
+    const uniqueRows = [];
+    const seenPhones = new Set();
+    for (const row of rows.slice(0, 50)) {
+      const phone = String(row.phoneNumber || row.PhoneNumber || row.phone || row.Phone || '').trim();
+      if (!phone || seenPhones.has(phone)) continue;
+      seenPhones.add(phone);
+      uniqueRows.push({
+        phoneNumber: phone,
+        customerName: row.customerName || row.CustomerName || row.name || row.Name || 'Unnamed Contact',
+        address: String(row.address || row.Address || row.ADDRESS || '').trim(),
+        assignedSalesId: '',
+        interestedStatus: 'No Response',
+        feedback: '',
+        uploadedBy: req.user.userId,
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
 
-    await putContactsBatch(extracted);
+    await putContactsBatch(uniqueRows);
     const extractionTimeMs = Date.now() - startTime;
     res.json({
       message: 'Contacts uploaded successfully',
-      contacts: extracted,
-      extractedCount: extracted.length,
+      contacts: uniqueRows,
+      extractedCount: uniqueRows.length,
       extractionTimeMs,
     });
   } catch (error) {
@@ -336,11 +342,25 @@ app.get('/contacts', authMiddleware, async (req, res) => {
   }
 });
 
-app.delete('/contacts/:id', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+app.get('/contacts/:phone', authMiddleware, async (req, res) => {
   try {
-    const existing = await getContactById(req.params.id);
+    const contact = await getContactByPhone(req.params.phone);
+    if (!contact) return res.status(404).json({ message: 'Contact not found' });
+    if (req.user.role !== 'ADMIN' && contact.assignedSalesId !== req.user.userId) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    res.json({ contact });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to load contact', error: error.message });
+  }
+});
+
+app.delete('/contacts/:phone', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+  try {
+    const existing = await getContactByPhone(req.params.phone);
     if (!existing) return res.status(404).json({ message: 'Contact not found' });
-    await dynamodb.delete({ TableName: CONTACTS_TABLE, Key: { contactId: req.params.id } }).promise();
+    await dynamodb.delete({ TableName: CONTACTS_TABLE, Key: { phoneNumber: req.params.phone } }).promise();
     res.json({ message: 'Contact deleted' });
   } catch (error) {
     console.error(error);
@@ -349,11 +369,11 @@ app.delete('/contacts/:id', authMiddleware, roleMiddleware(['ADMIN']), async (re
 });
 
 app.put('/contacts/assign', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
-  const { contactIds, assignedSalesId } = req.body;
-  if (!Array.isArray(contactIds) || !assignedSalesId) return res.status(400).json({ message: 'Invalid request' });
+  const { phoneNumbers, assignedSalesId } = req.body;
+  if (!Array.isArray(phoneNumbers) || !assignedSalesId) return res.status(400).json({ message: 'Invalid request' });
   try {
-    for (const id of contactIds) {
-      await updateContactById(id, { assignedSalesId, updatedAt: new Date().toISOString() });
+    for (const phone of phoneNumbers) {
+      await updateContactByPhone(phone, { assignedSalesId, updatedAt: new Date().toISOString() });
     }
     res.json({ message: 'Contacts assigned successfully' });
   } catch (error) {
@@ -362,14 +382,14 @@ app.put('/contacts/assign', authMiddleware, roleMiddleware(['ADMIN']), async (re
   }
 });
 
-app.put('/contacts/:id', authMiddleware, async (req, res) => {
+app.put('/contacts/:phone', authMiddleware, async (req, res) => {
   try {
-    const existing = await getContactById(req.params.id);
+    const existing = await getContactByPhone(req.params.phone);
     if (!existing) return res.status(404).json({ message: 'Contact not found' });
     if (req.user.role !== 'ADMIN' && existing.assignedSalesId !== req.user.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    const updated = await updateContactById(req.params.id, { ...req.body, updatedAt: new Date().toISOString() });
+    const updated = await updateContactByPhone(req.params.phone, { ...req.body, updatedAt: new Date().toISOString() });
     res.json({ contact: updated });
   } catch (error) {
     console.error(error);
@@ -396,14 +416,14 @@ app.get('/dashboard', authMiddleware, roleMiddleware(['ADMIN']), async (req, res
 });
 
 app.post('/feedback', authMiddleware, async (req, res) => {
-  const { contactId, feedback } = req.body;
+  const { phoneNumber, feedback } = req.body;
   try {
-    const existing = await getContactById(contactId);
+    const existing = await getContactByPhone(phoneNumber);
     if (!existing) return res.status(404).json({ message: 'Contact not found' });
     if (req.user.role !== 'ADMIN' && existing.assignedSalesId !== req.user.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    const updated = await updateContactById(contactId, { feedback, updatedAt: new Date().toISOString() });
+    const updated = await updateContactByPhone(phoneNumber, { feedback, updatedAt: new Date().toISOString() });
     res.json({ contact: updated });
   } catch (error) {
     console.error(error);

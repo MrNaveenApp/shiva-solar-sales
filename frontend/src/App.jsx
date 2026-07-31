@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import SalesDashboard from './pages/SalesDashboard';
 import ProfilePage from './pages/ProfilePage';
+import ContactDetails from './pages/ContactDetails';
 import Layout from './components/Layout';
 
 const App = () => {
@@ -90,6 +91,7 @@ const App = () => {
         <Route path="/admin/*" element={user && user.role === 'ADMIN' ? <Layout user={user} onLogout={logout}><AdminDashboard /></Layout> : <Navigate to="/login" replace />} />
         <Route path="/sales/*" element={user && user.role === 'SALES' ? <Layout user={user} onLogout={logout}><SalesDashboard /></Layout> : <Navigate to="/login" replace />} />
         <Route path="/profile" element={user ? <Layout user={user} onLogout={logout}><ProfilePage user={user} onLogout={logout} /></Layout> : <Navigate to="/login" replace />} />
+        <Route path="/contact/:phoneNumber" element={user ? <Layout user={user} onLogout={logout}><ContactDetails /></Layout> : <Navigate to="/login" replace />} />
       </Routes>
       <Snackbar open={snackbar.open} autoHideDuration={2500} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
         <Alert severity={snackbar.severity}>{snackbar.message}</Alert>

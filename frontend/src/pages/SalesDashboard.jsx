@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Card, CardContent, Grid, Stack, Typography, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
-import { Call as CallIcon } from '@mui/icons-material';
+import { Box, Card, CardContent, Stack, Typography, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const SalesDashboard = () => {
   const [contacts, setContacts] = useState([]);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState('');
-  const [activeContactId, setActiveContactId] = useState('');
+  const navigate = useNavigate();
 
   const fetchContacts = async () => {
     try {
@@ -22,25 +20,9 @@ const SalesDashboard = () => {
     fetchContacts();
   }, []);
 
-  const updateContact = async (contactId, updates) => {
+  const updateContact = async (phone, updates) => {
     try {
-      await api.put(`/contacts/${contactId}`, updates);
-      fetchContacts();
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const openFeedback = (contactId, feedback) => {
-    setActiveContactId(contactId);
-    setFeedbackText(feedback || '');
-    setFeedbackOpen(true);
-  };
-
-  const saveFeedback = async () => {
-    try {
-      await api.post('/feedback', { contactId: activeContactId, feedback: feedbackText });
-      setFeedbackOpen(false);
+      await api.put(`/contacts/${phone}`, updates);
       fetchContacts();
     } catch (error) {
       console.error(error);
@@ -82,43 +64,33 @@ const SalesDashboard = () => {
               <TableCell>Name</TableCell>
               <TableCell>Phone Number</TableCell>
               <TableCell>Address</TableCell>
-              <TableCell>Call</TableCell>
               <TableCell>Interested Status</TableCell>
-              <TableCell>Feedback</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {contacts.map((contact) => (
-              <TableRow key={contact.contactId}>
+              <TableRow
+                key={contact.phoneNumber}
+                hover
+                onClick={() => navigate(`/contact/${contact.phoneNumber}`)}
+                sx={{ cursor: 'pointer' }}
+              >
                 <TableCell>{contact.customerName}</TableCell>
-                <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} size="small" color="primary" sx={{ textTransform: 'none' }}>{contact.phoneNumber}</Button></TableCell>
+                <TableCell>{contact.phoneNumber}</TableCell>
                 <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
-                <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} variant="contained" size="small" startIcon={<CallIcon />}>Call</Button></TableCell>
-                <TableCell>
-                  <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.contactId, { interestedStatus: e.target.value })}>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} onClick={(e) => e.stopPropagation()} size="small">
                     <MenuItem value="Interested">Interested</MenuItem>
                     <MenuItem value="Not Interested">Not Interested</MenuItem>
                     <MenuItem value="Follow Up">Follow Up</MenuItem>
                     <MenuItem value="No Response">No Response</MenuItem>
                   </Select>
                 </TableCell>
-                <TableCell><Button onClick={() => openFeedback(contact.contactId, contact.feedback)}>{contact.feedback ? 'Edit Feedback' : 'Add Feedback'}</Button></TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </Paper>
-
-      <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)}>
-        <DialogTitle>Feedback</DialogTitle>
-        <DialogContent>
-          <TextField multiline rows={4} fullWidth value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFeedbackOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={saveFeedback}>Save</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 };

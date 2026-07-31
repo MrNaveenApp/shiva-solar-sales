@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const isValidPassword = (pw) => typeof pw === 'string' && pw.length >= 5 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
@@ -17,14 +17,14 @@ const AdminDashboard = () => {
   const [page, setPage] = useState(1);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
-  const [activeContactId, setActiveContactId] = useState('');
+  const [activePhone, setActivePhone] = useState('');
   const [uploadFile, setUploadFile] = useState(null);
-  const [selectedContactIds, setSelectedContactIds] = useState([]);
+  const [selectedPhones, setSelectedPhones] = useState([]);
   const [assignTargetUserId, setAssignTargetUserId] = useState('');
   const [successOpen, setSuccessOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [editOpen, setEditOpen] = useState(false);
-  const [editContact, setEditContact] = useState({ contactId: '', customerName: '', phoneNumber: '' });
+  const [editContact, setEditContact] = useState({ phoneNumber: '', customerName: '', address: '' });
   const [resetOpen, setResetOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
   const [resetPassword, setResetPassword] = useState('');
@@ -32,6 +32,7 @@ const AdminDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [extractionInfo, setExtractionInfo] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -101,20 +102,20 @@ const AdminDashboard = () => {
     }
   };
 
-  const updateContact = async (contactId, updates) => {
+  const updateContact = async (phone, updates) => {
     try {
-      await api.put(`/contacts/${contactId}`, updates);
+      await api.put(`/contacts/${phone}`, updates);
       fetchData();
     } catch (error) {
       console.error(error);
     }
   };
 
-  const deleteContact = async (contactId) => {
+  const deleteContact = async (phone) => {
     if (!window.confirm('Delete this contact?')) return;
     try {
-      await api.delete(`/contacts/${contactId}`);
-      setContacts((prev) => prev.filter((c) => c.contactId !== contactId));
+      await api.delete(`/contacts/${phone}`);
+      setContacts((prev) => prev.filter((c) => c.phoneNumber !== phone));
       setSuccessMsg('Contact deleted');
       setSuccessOpen(true);
     } catch (error) {
@@ -123,12 +124,12 @@ const AdminDashboard = () => {
   };
 
   const deleteSelected = async () => {
-    if (!selectedContactIds.length || !window.confirm(`Delete ${selectedContactIds.length} contacts?`)) return;
+    if (!selectedPhones.length || !window.confirm(`Delete ${selectedPhones.length} contacts?`)) return;
     try {
-      for (const id of selectedContactIds) {
-        await api.delete(`/contacts/${id}`);
+      for (const phone of selectedPhones) {
+        await api.delete(`/contacts/${phone}`);
       }
-      setSelectedContactIds([]);
+      setSelectedPhones([]);
       fetchData();
       setSuccessMsg('Contacts deleted');
       setSuccessOpen(true);
@@ -138,35 +139,35 @@ const AdminDashboard = () => {
   };
 
   const assignContacts = async () => {
-    if (!selectedContactIds.length || !assignTargetUserId) return;
-    await api.put('/contacts/assign', { contactIds: selectedContactIds, assignedSalesId: assignTargetUserId });
-    setSelectedContactIds([]);
+    if (!selectedPhones.length || !assignTargetUserId) return;
+    await api.put('/contacts/assign', { phoneNumbers: selectedPhones, assignedSalesId: assignTargetUserId });
+    setSelectedPhones([]);
     setAssignTargetUserId('');
     fetchData();
     setSuccessMsg('Contacts assigned successfully');
     setSuccessOpen(true);
   };
 
-  const toggleContactSelection = (contactId) => {
-    setSelectedContactIds((prev) =>
-      prev.includes(contactId) ? prev.filter((id) => id !== contactId) : [...prev, contactId]
+  const toggleContactSelection = (phone) => {
+    setSelectedPhones((prev) =>
+      prev.includes(phone) ? prev.filter((p) => p !== phone) : [...prev, phone]
     );
   };
 
   const toggleSelectAll = () => {
-    const pageIds = pagedContacts.map((c) => c.contactId);
-    const allSelected = pageIds.length > 0 && pageIds.every((id) => selectedContactIds.includes(id));
-    setSelectedContactIds(allSelected ? selectedContactIds.filter((id) => !pageIds.includes(id)) : [...new Set([...selectedContactIds, ...pageIds])]);
+    const pagePhones = pagedContacts.map((c) => c.phoneNumber);
+    const allSelected = pagePhones.length > 0 && pagePhones.every((p) => selectedPhones.includes(p));
+    setSelectedPhones(allSelected ? selectedPhones.filter((p) => !pagePhones.includes(p)) : [...new Set([...selectedPhones, ...pagePhones])]);
   };
 
   const openEdit = (contact) => {
-    setEditContact({ contactId: contact.contactId, customerName: contact.customerName, phoneNumber: contact.phoneNumber });
+    setEditContact({ phoneNumber: contact.phoneNumber, customerName: contact.customerName, address: contact.address || '' });
     setEditOpen(true);
   };
 
   const saveEdit = async () => {
     try {
-      await api.put(`/contacts/${editContact.contactId}`, { customerName: editContact.customerName, phoneNumber: editContact.phoneNumber });
+      await api.put(`/contacts/${editContact.phoneNumber}`, { customerName: editContact.customerName, address: editContact.address });
       setEditOpen(false);
       fetchData();
       setSuccessMsg('Contact updated');
@@ -199,15 +200,15 @@ const AdminDashboard = () => {
     }
   };
 
-  const openFeedback = (contactId, feedback) => {
-    setActiveContactId(contactId);
+  const openFeedback = (phone, feedback) => {
+    setActivePhone(phone);
     setFeedbackText(feedback || '');
     setFeedbackOpen(true);
   };
 
   const saveFeedback = async () => {
     try {
-      await api.post('/feedback', { contactId: activeContactId, feedback: feedbackText });
+      await api.post('/feedback', { phoneNumber: activePhone, feedback: feedbackText });
       setFeedbackOpen(false);
       fetchData();
       setSuccessMsg('Feedback saved');
@@ -279,8 +280,8 @@ const AdminDashboard = () => {
   );
 
   const renderContacts = () => {
-    const pageIds = pagedContacts.map((c) => c.contactId);
-    const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedContactIds.includes(id));
+    const pagePhones = pagedContacts.map((c) => c.phoneNumber);
+    const allPageSelected = pagePhones.length > 0 && pagePhones.every((p) => selectedPhones.includes(p));
     const salesUsers = users.filter((u) => u.role === 'SALES');
     const displayUser = (u) => u.name || u.phoneNumber;
     const getSalesName = (userId) => {
@@ -317,10 +318,10 @@ const AdminDashboard = () => {
           </FormControl>
         </Stack>
 
-        {selectedContactIds.length > 0 && (
+        {selectedPhones.length > 0 && (
           <Card sx={{ mt: 2, p: 2, borderRadius: 3, background: '#FFF7ED' }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ xs: 'stretch', md: 'center' }}>
-              <Chip label={`${selectedContactIds.length} selected`} color="primary" sx={{ fontWeight: 700 }} />
+              <Chip label={`${selectedPhones.length} selected`} color="primary" sx={{ fontWeight: 700 }} />
               <FormControl sx={{ minWidth: 200 }} size="small">
                 <InputLabel>Assign to</InputLabel>
                 <Select value={assignTargetUserId} label="Assign to" onChange={(e) => setAssignTargetUserId(e.target.value)}>
@@ -329,7 +330,7 @@ const AdminDashboard = () => {
               </FormControl>
               <Button variant="contained" disabled={!assignTargetUserId} onClick={assignContacts}>Assign</Button>
               <Button variant="outlined" color="error" onClick={deleteSelected}>Delete Selected</Button>
-              <Button variant="outlined" onClick={() => setSelectedContactIds([])}>Deselect All</Button>
+              <Button variant="outlined" onClick={() => setSelectedPhones([])}>Deselect All</Button>
             </Stack>
           </Card>
         )}
@@ -352,35 +353,41 @@ const AdminDashboard = () => {
             </TableHead>
             <TableBody>
               {pagedContacts.map((contact) => (
-                <TableRow key={contact.contactId} selected={selectedContactIds.includes(contact.contactId)}>
-                  <TableCell padding="checkbox">
-                    <Checkbox checked={selectedContactIds.includes(contact.contactId)} onChange={() => toggleContactSelection(contact.contactId)} />
+                <TableRow
+                  key={contact.phoneNumber}
+                  hover
+                  selected={selectedPhones.includes(contact.phoneNumber)}
+                  onClick={() => navigate(`/contact/${contact.phoneNumber}`)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                    <Checkbox checked={selectedPhones.includes(contact.phoneNumber)} onChange={() => toggleContactSelection(contact.phoneNumber)} />
                   </TableCell>
                   <TableCell>{contact.customerName}</TableCell>
-                  <TableCell><Button href={`tel:${contact.phoneNumber}`} size="small">{contact.phoneNumber}</Button></TableCell>
+                  <TableCell>{contact.phoneNumber}</TableCell>
                   <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
                   <TableCell>{getSalesName(contact.assignedSalesId) || <Chip label="Unassigned" size="small" />}</TableCell>
-                  <TableCell>
-                    <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.contactId, { interestedStatus: e.target.value })} size="small">
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} size="small" onClick={(e) => e.stopPropagation()}>
                       <MenuItem value="Interested">Interested</MenuItem>
                       <MenuItem value="Not Interested">Not Interested</MenuItem>
                       <MenuItem value="Follow Up">Follow Up</MenuItem>
                       <MenuItem value="No Response">No Response</MenuItem>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     {contact.feedback
                       ? <Tooltip title={contact.feedback} arrow placement="top-start">
                           <Typography variant="body2" sx={{ maxWidth: 200, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'default' }}>{contact.feedback}</Typography>
                         </Tooltip>
-                      : <Button onClick={() => openFeedback(contact.contactId, '')} size="small">Add</Button>
+                      : <Button onClick={() => openFeedback(contact.phoneNumber, '')} size="small">Add</Button>
                     }
-                    {contact.feedback && <Button onClick={() => openFeedback(contact.contactId, contact.feedback)} size="small">Edit</Button>}
+                    {contact.feedback && <Button onClick={() => openFeedback(contact.phoneNumber, contact.feedback)} size="small">Edit</Button>}
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <Stack direction="row" spacing={0.5}>
                       <Button size="small" onClick={() => openEdit(contact)}>Edit</Button>
-                      <Button size="small" color="error" onClick={() => deleteContact(contact.contactId)}>Delete</Button>
+                      <Button size="small" color="error" onClick={() => deleteContact(contact.phoneNumber)}>Delete</Button>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -491,8 +498,9 @@ const AdminDashboard = () => {
         <DialogTitle>Edit Contact</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField label="Phone Number" value={editContact.phoneNumber} fullWidth size="small" disabled helperText="Phone number cannot be changed" />
             <TextField label="Customer Name" value={editContact.customerName} onChange={(e) => setEditContact({ ...editContact, customerName: e.target.value })} fullWidth size="small" />
-            <TextField label="Phone Number" value={editContact.phoneNumber} onChange={(e) => setEditContact({ ...editContact, phoneNumber: e.target.value })} fullWidth size="small" />
+            <TextField label="Address" value={editContact.address} onChange={(e) => setEditContact({ ...editContact, address: e.target.value })} fullWidth size="small" />
           </Stack>
         </DialogContent>
         <DialogActions>
