@@ -15,6 +15,7 @@ const AdminDashboard = () => {
   const [selectedSales, setSelectedSales] = useState('All');
   const [newUser, setNewUser] = useState({ name: '', phoneNumber: '', password: '', role: 'SALES' });
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState('');
   const [activePhone, setActivePhone] = useState('');
@@ -60,7 +61,7 @@ const AdminDashboard = () => {
     return matchesSearch && matchesStatus && matchesSales;
   });
 
-  const pagedContacts = filteredContacts.slice((page - 1) * 20, page * 20);
+  const pagedContacts = filteredContacts.slice((page - 1) * pageSize, page * pageSize);
 
   const createUser = async () => {
     if (!isValidPassword(newUser.password)) {
@@ -403,9 +404,25 @@ const AdminDashboard = () => {
         </Paper>
 
         <Stack direction="row" spacing={1} sx={{ mt: 2 }} alignItems="center">
+          <FormControl size="small" sx={{ minWidth: 110 }}>
+            <InputLabel>Show</InputLabel>
+            <Select
+              value={pageSize}
+              label="Show"
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+            >
+              {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
+                <MenuItem key={n} value={n}>{n}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Typography variant="body2" color="text.secondary">
+            Showing {filteredContacts.length === 0 ? 0 : (page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredContacts.length)} of {filteredContacts.length}
+          </Typography>
+          <Box sx={{ flexGrow: 1 }} />
           <Button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button>
-          <Typography variant="body2" color="text.secondary">Page {page} of {Math.ceil(filteredContacts.length / 20) || 1}</Typography>
-          <Button disabled={page * 20 >= filteredContacts.length} onClick={() => setPage(page + 1)}>Next</Button>
+          <Typography variant="body2" color="text.secondary">Page {page} of {Math.ceil(filteredContacts.length / pageSize) || 1}</Typography>
+          <Button disabled={page * pageSize >= filteredContacts.length} onClick={() => setPage(page + 1)}>Next</Button>
         </Stack>
       </Box>
     );
