@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, Card, CardContent, Grid, Stack, Typography, Select, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { Call as CallIcon } from '@mui/icons-material';
 import api from '../api';
 
 const SalesDashboard = () => {
@@ -89,8 +90,8 @@ const SalesDashboard = () => {
             {contacts.map((contact) => (
               <TableRow key={contact.contactId}>
                 <TableCell>{contact.customerName}</TableCell>
-                <TableCell>{contact.phoneNumber}</TableCell>
-                <TableCell><Button href={`tel:${contact.phoneNumber}`} variant="outlined">Call</Button></TableCell>
+                <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} size="small" color="primary" sx={{ textTransform: 'none' }}>{contact.phoneNumber}</Button></TableCell>
+                <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} variant="contained" size="small" startIcon={<CallIcon />}>Call</Button></TableCell>
                 <TableCell>
                   <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.contactId, { interestedStatus: e.target.value })}>
                     <MenuItem value="Interested">Interested</MenuItem>
