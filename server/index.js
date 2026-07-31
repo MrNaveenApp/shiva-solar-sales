@@ -389,7 +389,21 @@ app.put('/contacts/:phone', authMiddleware, async (req, res) => {
     if (req.user.role !== 'ADMIN' && existing.assignedSalesId !== req.user.userId) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    const updated = await updateContactByPhone(req.params.phone, { ...req.body, updatedAt: new Date().toISOString() });
+    const { phoneNumber: newPhone, ...updates } = req.body;
+    let updated;
+    if (newPhone && newPhone !== req.params.phone) {
+      if (req.user.role !== 'ADMIN') return res.status(403).json({ message: 'Only admin can change phone number' });
+      const existingNew = await getContactByPhone(newPhone);
+      if (existingNew) return res.status(409).json({ message: 'A contact with this phone number already exists' });
+      const newItem = { ...existing, ...updates, phoneNumber: newPhone, updatedAt: new Date().toISOString() };
+      delete newItem.phoneNumber_key;
+      await dynamodb.put({ TableName: CONTACTS_TABLE, Item: newItem }).promise();
+      await dynamodb.delete({ TableName: CONTACTS_TABLE, Key: { phoneNumber: req.params.phone } }).promise();
+      updated = newItem;
+    } else {
+      if (updates.phoneNumber) delete updates.phoneNumber;
+      updated = await updateContactByPhone(req.params.phone, { ...updates, updatedAt: new Date().toISOString() });
+    }
     res.json({ contact: updated });
   } catch (error) {
     console.error(error);
