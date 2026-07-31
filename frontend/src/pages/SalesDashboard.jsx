@@ -81,6 +81,7 @@ const SalesDashboard = () => {
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Phone Number</TableCell>
+              <TableCell>Address</TableCell>
               <TableCell>Call</TableCell>
               <TableCell>Interested Status</TableCell>
               <TableCell>Feedback</TableCell>
@@ -91,6 +92,7 @@ const SalesDashboard = () => {
               <TableRow key={contact.contactId}>
                 <TableCell>{contact.customerName}</TableCell>
                 <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} size="small" color="primary" sx={{ textTransform: 'none' }}>{contact.phoneNumber}</Button></TableCell>
+                <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
                 <TableCell><Button component="a" href={`tel:${contact.phoneNumber}`} variant="contained" size="small" startIcon={<CallIcon />}>Call</Button></TableCell>
                 <TableCell>
                   <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.contactId, { interestedStatus: e.target.value })}>

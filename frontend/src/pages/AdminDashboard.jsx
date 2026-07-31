@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, Grid, Snackbar, Stack, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../api';
 
@@ -29,6 +29,8 @@ const AdminDashboard = () => {
   const [resetTarget, setResetTarget] = useState(null);
   const [resetPassword, setResetPassword] = useState('');
   const [userError, setUserError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [extractionInfo, setExtractionInfo] = useState(null);
   const location = useLocation();
 
   const fetchData = async () => {
@@ -78,14 +80,24 @@ const AdminDashboard = () => {
 
   const handleUpload = async () => {
     if (!uploadFile) return;
+    setUploading(true);
+    setExtractionInfo(null);
     const formData = new FormData();
     formData.append('file', uploadFile);
     try {
-      await api.post('/contacts/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data } = await api.post('/contacts/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setExtractionInfo({
+        count: data.extractedCount || data.contacts?.length || 0,
+        timeMs: data.extractionTimeMs || 0,
+      });
+      setSuccessMsg('Contacts extracted successfully');
+      setSuccessOpen(true);
       setUploadFile(null);
       fetchData();
     } catch (error) {
       console.error(error);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -334,6 +346,7 @@ const AdminDashboard = () => {
                 </TableCell>
                 <TableCell>Customer Name</TableCell>
                 <TableCell>Phone Number</TableCell>
+                <TableCell>Address</TableCell>
                 <TableCell>Sales Person</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Feedback</TableCell>
@@ -348,6 +361,7 @@ const AdminDashboard = () => {
                   </TableCell>
                   <TableCell>{contact.customerName}</TableCell>
                   <TableCell><Button href={`tel:${contact.phoneNumber}`} size="small">{contact.phoneNumber}</Button></TableCell>
+                  <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
                   <TableCell>{getSalesName(contact.assignedSalesId) || <Chip label="Unassigned" size="small" />}</TableCell>
                   <TableCell>
                     <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.contactId, { interestedStatus: e.target.value })} size="small">
@@ -373,7 +387,7 @@ const AdminDashboard = () => {
                 </TableRow>
               ))}
               {pagedContacts.length === 0 && (
-                <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} align="center" sx={{ py: 4 }}><Typography color="text.secondary">No contacts found</Typography></TableCell></TableRow>
               )}
             </TableBody>
           </Table>
@@ -396,9 +410,21 @@ const AdminDashboard = () => {
         <CardContent>
           <Stack spacing={2.5}>
             <Typography color="text.secondary">Supported formats: PDF, XLSX, XLS</Typography>
-            <input type="file" accept=".pdf,.xlsx,.xls" onChange={(e) => setUploadFile(e.target.files[0])} />
-            <Button variant="contained" onClick={handleUpload}>Upload & Parse</Button>
-            {uploadFile && <Typography color="text.secondary">Selected file: {uploadFile.name}</Typography>}
+            <input type="file" accept=".pdf,.xlsx,.xls" onChange={(e) => setUploadFile(e.target.files[0])} disabled={uploading} />
+            <Button variant="contained" onClick={handleUpload} disabled={!uploadFile || uploading}>Upload & Parse</Button>
+            {uploadFile && !uploading && <Typography color="text.secondary">Selected file: {uploadFile.name}</Typography>}
+            {uploading && (
+              <Stack direction="row" spacing={2} alignItems="center">
+                <CircularProgress size={22} color="primary" />
+                <Typography color="text.secondary">Extracting contacts, please wait...</Typography>
+              </Stack>
+            )}
+            {extractionInfo && !uploading && (
+              <Alert severity="success">
+                Successfully extracted <strong>{extractionInfo.count}</strong> contacts in{' '}
+                <strong>{(extractionInfo.timeMs / 1000).toFixed(2)} seconds</strong>
+              </Alert>
+            )}
           </Stack>
         </CardContent>
       </Card>

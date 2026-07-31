@@ -152,16 +152,29 @@ const updateContactById = async (contactId, updates) => {
 
 // ── PDF parser ────────────────────────────────────────────────
 
+const PHONE_RE = /(\d{5}[\s\-]?\d{5})/;
+
 const parsePdfContacts = (text) => {
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const rows = [];
-  for (const line of lines) {
-    const phoneMatch = line.match(/(\d[\d\s\-]{8,15}\d)/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const phoneMatch = line.match(PHONE_RE);
     if (phoneMatch) {
       const phone = phoneMatch[1].replace(/[\s\-]/g, '');
-      const name = line.slice(0, line.indexOf(phoneMatch[0])).trim();
+      const phoneIdx = line.indexOf(phoneMatch[1]);
+      const name = line.slice(0, phoneIdx).trim();
+      let address = line.slice(phoneIdx + phoneMatch[1].length).trim();
+      // If no address on the same line, check the next line (address often follows the phone)
+      if (!address && i + 1 < lines.length) {
+        const nextLine = lines[i + 1];
+        if (!PHONE_RE.test(nextLine) && nextLine.length > 5) {
+          address = nextLine;
+          i++;
+        }
+      }
       if (name && name.length >= 2 && phone.length === 10) {
-        rows.push({ customerName: name, phoneNumber: phone });
+        rows.push({ customerName: name, phoneNumber: phone, address: address || '' });
       }
     }
   }
@@ -268,6 +281,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     const filePath = req.file.path;
     const ext = path.extname(req.file.originalname).toLowerCase();
+    const startTime = Date.now();
     let rows = [];
 
     if (ext === '.pdf') {
@@ -286,6 +300,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
       contactId: uuidv4(),
       customerName: row.customerName || row.CustomerName || row.name || row.Name || 'Unnamed Contact',
       phoneNumber: String(row.phoneNumber || row.PhoneNumber || row.phone || row.Phone || '').trim(),
+      address: String(row.address || row.Address || row.ADDRESS || '').trim(),
       assignedSalesId: '',
       interestedStatus: 'No Response',
       feedback: '',
@@ -295,7 +310,13 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
     }));
 
     await putContactsBatch(extracted);
-    res.json({ message: 'Contacts uploaded successfully', contacts: extracted });
+    const extractionTimeMs = Date.now() - startTime;
+    res.json({
+      message: 'Contacts uploaded successfully',
+      contacts: extracted,
+      extractedCount: extracted.length,
+      extractionTimeMs,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Failed to process file', error: error.message });
