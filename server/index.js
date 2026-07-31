@@ -292,6 +292,18 @@ app.get('/contacts', authMiddleware, async (req, res) => {
   }
 });
 
+app.delete('/contacts/:id', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+  try {
+    const existing = await getContactById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Contact not found' });
+    await dynamodb.delete({ TableName: CONTACTS_TABLE, Key: { contactId: req.params.id } }).promise();
+    res.json({ message: 'Contact deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to delete contact', error: error.message });
+  }
+});
+
 app.put('/contacts/assign', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
   const { contactIds, assignedSalesId } = req.body;
   if (!Array.isArray(contactIds) || !assignedSalesId) return res.status(400).json({ message: 'Invalid request' });
