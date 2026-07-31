@@ -319,6 +319,14 @@ const AdminDashboard = () => {
               {salesUsers.map((u) => <MenuItem key={u.userId} value={u.userId}>{displayUser(u)}</MenuItem>)}
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: { xs: '100%', md: 110 } }}>
+            <InputLabel>Show</InputLabel>
+            <Select value={pageSize} label="Show" onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+              {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
+                <MenuItem key={n} value={n}>{n}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Stack>
 
         {selectedPhones.length > 0 && (
@@ -404,18 +412,6 @@ const AdminDashboard = () => {
         </Paper>
 
         <Stack direction="row" spacing={1} sx={{ mt: 2 }} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Show</InputLabel>
-            <Select
-              value={pageSize}
-              label="Show"
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-            >
-              {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((n) => (
-                <MenuItem key={n} value={n}>{n}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
           <Typography variant="body2" color="text.secondary">
             Showing {filteredContacts.length === 0 ? 0 : (page - 1) * pageSize + 1}-{Math.min(page * pageSize, filteredContacts.length)} of {filteredContacts.length}
           </Typography>
