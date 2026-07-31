@@ -276,6 +276,28 @@ app.get('/users', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) =>
   }
 });
 
+app.delete('/users/:phone', authMiddleware, roleMiddleware(['ADMIN']), async (req, res) => {
+  try {
+    const user = await getUserByPhone(req.params.phone);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const phoneKey = user.phone || user.phoneNumber;
+    if (phoneKey === req.user.phoneNumber) {
+      return res.status(400).json({ message: 'You cannot delete your own account' });
+    }
+    // Unassign all contacts assigned to this user
+    const contacts = await getAllContacts();
+    const assigned = contacts.filter((c) => c.assignedSalesId === user.userId);
+    for (const contact of assigned) {
+      await updateContactByPhone(contact.phoneNumber, { assignedSalesId: '' });
+    }
+    await dynamodb.delete({ TableName: USERS_TABLE_CANDIDATES[0], Key: { phone: phoneKey } }).promise();
+    res.json({ message: 'User deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to delete user', error: error.message });
+  }
+});
+
 app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });

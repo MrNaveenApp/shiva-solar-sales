@@ -34,6 +34,7 @@ const AdminDashboard = () => {
   const [extractionInfo, setExtractionInfo] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const loggedUser = JSON.parse(localStorage.getItem('crmUser') || 'null');
 
   const fetchData = async () => {
     try {
@@ -198,6 +199,20 @@ const AdminDashboard = () => {
       setSuccessOpen(true);
     } catch (error) {
       setUserError(error.response?.data?.message || 'Failed to reset password');
+    }
+  };
+
+  const deleteUser = async (userItem) => {
+    if (!window.confirm(`Delete user ${userItem.name || userItem.phoneNumber}? Their assigned contacts will become unassigned.`)) return;
+    try {
+      await api.delete(`/users/${userItem.phoneNumber}`);
+      setUsers((prev) => prev.filter((u) => u.userId !== userItem.userId));
+      setSuccessMsg('User deleted');
+      setSuccessOpen(true);
+    } catch (error) {
+      console.error(error);
+      setSuccessMsg(error.response?.data?.message || 'Failed to delete user');
+      setSuccessOpen(true);
     }
   };
 
@@ -486,7 +501,12 @@ const AdminDashboard = () => {
                   <Typography fontWeight={700} sx={{ fontSize: '0.9rem' }}>{userItem.name || userItem.phoneNumber}</Typography>
                   <Typography color="text.secondary" sx={{ fontSize: '0.8rem' }}>{userItem.phoneNumber} • {userItem.role}</Typography>
                 </Box>
-                <Button size="small" variant="outlined" onClick={() => openReset(userItem)}>Reset Password</Button>
+                <Stack direction="row" spacing={1}>
+                  <Button size="small" variant="outlined" onClick={() => openReset(userItem)}>Reset Password</Button>
+                  {userItem.phoneNumber !== loggedUser?.phoneNumber && (
+                    <Button size="small" variant="outlined" color="error" onClick={() => deleteUser(userItem)}>Delete</Button>
+                  )}
+                </Stack>
               </Box>
             ))}
           </Stack>
