@@ -172,22 +172,22 @@ const ContactDetails = () => {
                 </FormControl>
               </Box>
             </Box>
-            <Divider />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box>
-                <Typography variant="body2" color="text.secondary">Call Status</Typography>
-                <FormControl size="small" sx={{ mt: 0.5, minWidth: 180 }}>
-                  <Select
-                    value={draftCallStatus}
-                    onChange={(e) => setDraftCallStatus(e.target.value)}
-                  >
-                    {CALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Box>
             {isAdmin && (
               <>
+                <Divider />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Call Status</Typography>
+                    <FormControl size="small" sx={{ mt: 0.5, minWidth: 180 }}>
+                      <Select
+                        value={draftCallStatus}
+                        onChange={(e) => setDraftCallStatus(e.target.value)}
+                      >
+                        {CALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                      </Select>
+                    </FormControl>
+                  </Box>
+                </Box>
                 <Divider />
                 <Box>
                   <Typography variant="body2" color="text.secondary">Assigned Sales Person</Typography>
