@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, Card, CardContent, Stack, Typography, Table, TableBody, TableCell, TableHead, TableRow, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import CallStatusChip from '../components/CallStatusChip';
+import StatusChip from '../components/StatusChip';
 import api from '../api';
 
 const SalesDashboard = () => {
@@ -42,8 +42,8 @@ const SalesDashboard = () => {
               <Typography variant="h5" fontWeight={700} color="warning.main">{contacts.filter((c) => c.interestedStatus === 'Follow Up').length}</Typography>
             </Box>
             <Box>
-              <Typography color="text.secondary" variant="body2">No Response</Typography>
-              <Typography variant="h5" fontWeight={700} color="text.secondary">{contacts.filter((c) => c.interestedStatus === 'No Response').length}</Typography>
+              <Typography color="text.secondary" variant="body2">Need to Call</Typography>
+              <Typography variant="h5" fontWeight={700} color="info.main">{contacts.filter((c) => c.interestedStatus === 'Need to Call').length}</Typography>
             </Box>
           </Stack>
         </CardContent>
@@ -54,7 +54,7 @@ const SalesDashboard = () => {
           <TableHead>
             <TableRow>
               <TableCell>Customer Name</TableCell>
-              <TableCell>Call Status</TableCell>
+              <TableCell>Interested Status</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -66,7 +66,7 @@ const SalesDashboard = () => {
                 sx={{ cursor: 'pointer' }}
               >
                 <TableCell>{contact.customerName}</TableCell>
-                <TableCell><CallStatusChip status={contact.callStatus} /></TableCell>
+                <TableCell><StatusChip status={contact.interestedStatus} /></TableCell>
               </TableRow>
             ))}
             {contacts.length === 0 && (

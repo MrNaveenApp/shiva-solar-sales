@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, CircularProgress, Grid, Snackbar, Stack, TableSortLabel, Tooltip, Typography, TextField, MenuItem, Table, TableBody, TableCell, TableHead, TableRow, Paper, Dialog, DialogTitle, DialogContent, DialogActions, InputLabel, Select, FormControl } from '@mui/material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import CallStatusChip from '../components/CallStatusChip';
+import StatusChip from '../components/StatusChip';
 import api from '../api';
 
 const isValidPassword = (pw) => typeof pw === 'string' && pw.length >= 5 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
@@ -356,7 +356,9 @@ const AdminDashboard = () => {
               <MenuItem value="Interested">Interested</MenuItem>
               <MenuItem value="Not Interested">Not Interested</MenuItem>
               <MenuItem value="Follow Up">Follow Up</MenuItem>
-              <MenuItem value="No Response">No Response</MenuItem>
+              <MenuItem value="Answered">Answered</MenuItem>
+              <MenuItem value="Not Answered">Not Answered</MenuItem>
+              <MenuItem value="Need to Call">Need to Call</MenuItem>
               <MenuItem value="Installed">Installed</MenuItem>
             </Select>
           </FormControl>
@@ -423,7 +425,7 @@ const AdminDashboard = () => {
                     Created At
                   </TableSortLabel>
                 </TableCell>
-                <TableCell>Call Status</TableCell>
+                <TableCell>Interested Status</TableCell>
                 <TableCell>Sales Person</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell>Feedback</TableCell>
@@ -446,14 +448,16 @@ const AdminDashboard = () => {
                   <TableCell>{contact.phoneNumber}</TableCell>
                   <TableCell>{contact.address || <Typography variant="body2" color="text.secondary">—</Typography>}</TableCell>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatTimestamp(contact.createdAt || contact.uploadedAt)}</TableCell>
-                  <TableCell><CallStatusChip status={contact.callStatus} /></TableCell>
+                  <TableCell><StatusChip status={contact.interestedStatus} /></TableCell>
                   <TableCell>{getSalesName(contact.assignedSalesId) || <Chip label="Unassigned" size="small" />}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Select value={contact.interestedStatus} onChange={(e) => updateContact(contact.phoneNumber, { interestedStatus: e.target.value })} size="small" onClick={(e) => e.stopPropagation()}>
                       <MenuItem value="Interested">Interested</MenuItem>
                       <MenuItem value="Not Interested">Not Interested</MenuItem>
                       <MenuItem value="Follow Up">Follow Up</MenuItem>
-                      <MenuItem value="No Response">No Response</MenuItem>
+                      <MenuItem value="Answered">Answered</MenuItem>
+                      <MenuItem value="Not Answered">Not Answered</MenuItem>
+                      <MenuItem value="Need to Call">Need to Call</MenuItem>
                       <MenuItem value="Installed">Installed</MenuItem>
                     </Select>
                   </TableCell>

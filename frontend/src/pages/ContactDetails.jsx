@@ -4,7 +4,7 @@ import { ArrowBack as ArrowBackIcon, Call as CallIcon, Delete as DeleteIcon, Edi
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
-const STATUSES = ['Interested', 'Not Interested', 'Follow Up', 'No Response', 'Installed'];
+const STATUSES = ['Interested', 'Not Interested', 'Follow Up', 'Answered', 'Not Answered', 'Need to Call', 'Installed'];
 const CALL_STATUSES = ['Need to Call', 'Not Answered', 'Answered'];
 
 const ContactDetails = () => {
@@ -18,7 +18,7 @@ const ContactDetails = () => {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState({ phoneNumber: '', customerName: '', address: '' });
-  const [draftStatus, setDraftStatus] = useState('No Response');
+  const [draftStatus, setDraftStatus] = useState('Follow Up');
   const [draftCallStatus, setDraftCallStatus] = useState('Need to Call');
   const [draftFeedback, setDraftFeedback] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -43,7 +43,7 @@ const ContactDetails = () => {
 
   useEffect(() => {
     if (contact) {
-      setDraftStatus(contact.interestedStatus || 'No Response');
+      setDraftStatus(contact.interestedStatus || 'Follow Up');
       setDraftCallStatus(contact.callStatus || 'Need to Call');
       setDraftFeedback(contact.feedback || '');
     }

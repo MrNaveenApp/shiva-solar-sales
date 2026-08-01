@@ -328,7 +328,7 @@ app.post('/contacts/upload', authMiddleware, roleMiddleware(['ADMIN']), upload.s
         customerName: row.customerName || row.CustomerName || row.name || row.Name || 'Unnamed Contact',
         address: String(row.address || row.Address || row.ADDRESS || '').trim(),
         assignedSalesId: '',
-        interestedStatus: 'No Response',
+        interestedStatus: 'Need to Call',
         callStatus: 'Need to Call',
         feedback: '',
         uploadedBy: req.user.userId,
