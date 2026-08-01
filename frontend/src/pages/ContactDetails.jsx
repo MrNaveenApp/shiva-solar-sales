@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, FormControl, IconButton, InputLabel, MenuItem, Select, Snackbar, Stack, Typography, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
-import { ArrowBack as ArrowBackIcon, Call as CallIcon, Delete as DeleteIcon, Edit as EditIcon, Feedback as FeedbackIcon, Person as PersonIcon, LocationOn as LocationOnIcon, Phone as PhoneIcon } from '@mui/icons-material';
+import { ArrowBack as ArrowBackIcon, Call as CallIcon, Delete as DeleteIcon, Edit as EditIcon, Person as PersonIcon, LocationOn as LocationOnIcon, Phone as PhoneIcon } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api';
 
@@ -18,8 +18,9 @@ const ContactDetails = () => {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
   const [editData, setEditData] = useState({ phoneNumber: '', customerName: '', address: '' });
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackText, setFeedbackText] = useState('');
+  const [draftStatus, setDraftStatus] = useState('No Response');
+  const [draftCallStatus, setDraftCallStatus] = useState('Need to Call');
+  const [draftFeedback, setDraftFeedback] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const fetchContact = async () => {
@@ -40,25 +41,27 @@ const ContactDetails = () => {
 
   useEffect(() => { fetchContact(); }, [phoneNumber]);
 
+  useEffect(() => {
+    if (contact) {
+      setDraftStatus(contact.interestedStatus || 'No Response');
+      setDraftCallStatus(contact.callStatus || 'Need to Call');
+      setDraftFeedback(contact.feedback || '');
+    }
+  }, [contact]);
+
   const showToast = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
-  const updateStatus = async (status) => {
+  const saveAll = async () => {
     try {
-      await api.put(`/contacts/${phoneNumber}`, { interestedStatus: status });
-      setContact((prev) => ({ ...prev, interestedStatus: status }));
-      showToast('Status updated');
+      await api.put(`/contacts/${phoneNumber}`, {
+        interestedStatus: draftStatus,
+        callStatus: draftCallStatus,
+        feedback: draftFeedback,
+      });
+      setContact((prev) => ({ ...prev, interestedStatus: draftStatus, callStatus: draftCallStatus, feedback: draftFeedback }));
+      showToast('All changes saved');
     } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to update status', 'error');
-    }
-  };
-
-  const updateCallStatus = async (callStatus) => {
-    try {
-      await api.put(`/contacts/${phoneNumber}`, { callStatus });
-      setContact((prev) => ({ ...prev, callStatus }));
-      showToast('Call status updated');
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to update call status', 'error');
+      showToast(error.response?.data?.message || 'Failed to save', 'error');
     }
   };
 
@@ -94,22 +97,6 @@ const ContactDetails = () => {
       setTimeout(() => navigate(isAdmin ? '/admin/contacts' : '/sales'), 900);
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to delete', 'error');
-    }
-  };
-
-  const openFeedback = () => {
-    setFeedbackText(contact.feedback || '');
-    setFeedbackOpen(true);
-  };
-
-  const saveFeedback = async () => {
-    try {
-      await api.post('/feedback', { phoneNumber, feedback: feedbackText });
-      setFeedbackOpen(false);
-      showToast('Feedback saved');
-      fetchContact();
-    } catch (error) {
-      showToast(error.response?.data?.message || 'Failed to save feedback', 'error');
     }
   };
 
@@ -173,8 +160,8 @@ const ContactDetails = () => {
                 <Typography variant="body2" color="text.secondary">Interested Status</Typography>
                 <FormControl size="small" sx={{ mt: 0.5, minWidth: 180 }}>
                   <Select
-                    value={contact.interestedStatus || 'No Response'}
-                    onChange={(e) => updateStatus(e.target.value)}
+                    value={draftStatus}
+                    onChange={(e) => setDraftStatus(e.target.value)}
                   >
                     {STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                   </Select>
@@ -187,8 +174,8 @@ const ContactDetails = () => {
                 <Typography variant="body2" color="text.secondary">Call Status</Typography>
                 <FormControl size="small" sx={{ mt: 0.5, minWidth: 180 }}>
                   <Select
-                    value={contact.callStatus || 'Need to Call'}
-                    onChange={(e) => updateCallStatus(e.target.value)}
+                    value={draftCallStatus}
+                    onChange={(e) => setDraftCallStatus(e.target.value)}
                   >
                     {CALL_STATUSES.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                   </Select>
@@ -209,15 +196,25 @@ const ContactDetails = () => {
             <Divider />
             <Box>
               <Typography variant="body2" color="text.secondary">Feedback</Typography>
-              <Typography sx={{ mt: 0.5, whiteSpace: 'pre-wrap' }}>{contact.feedback || 'No feedback yet'}</Typography>
+              <TextField
+                multiline
+                rows={3}
+                fullWidth
+                size="small"
+                placeholder="Add feedback..."
+                value={draftFeedback}
+                onChange={(e) => setDraftFeedback(e.target.value)}
+                sx={{ mt: 0.5 }}
+              />
             </Box>
           </Stack>
         </CardContent>
       </Card>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 3 }}>
-        <Button component="a" href={`tel:${contact.phoneNumber}`} variant="contained" size="large" startIcon={<CallIcon />}>Call {contact.phoneNumber}</Button>
-        <Button variant="outlined" size="large" startIcon={<FeedbackIcon />} onClick={openFeedback}>{contact.feedback ? 'Edit Feedback' : 'Add Feedback'}</Button>
+      <Button variant="contained" size="large" fullWidth sx={{ mt: 3 }} onClick={saveAll}>Done</Button>
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
+        <Button component="a" href={`tel:${contact.phoneNumber}`} variant="outlined" size="large" startIcon={<CallIcon />}>Call {contact.phoneNumber}</Button>
         {isAdmin && (
           <>
             <Button variant="outlined" size="large" startIcon={<EditIcon />} onClick={openEdit}>Edit</Button>
@@ -238,17 +235,6 @@ const ContactDetails = () => {
         <DialogActions>
           <Button onClick={() => setEditOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={saveEdit}>Save</Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Feedback</DialogTitle>
-        <DialogContent>
-          <TextField multiline rows={4} fullWidth value={feedbackText} onChange={(e) => setFeedbackText(e.target.value)} placeholder="Enter feedback..." size="small" />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFeedbackOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={saveFeedback}>Save</Button>
         </DialogActions>
       </Dialog>
 

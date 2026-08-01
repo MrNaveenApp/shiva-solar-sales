@@ -207,7 +207,6 @@ const roleMiddleware = (roles) => (req, res, next) => {
 app.post('/login', async (req, res) => {
   const phoneValue = req.body.phoneNumber || req.body.phone;
   const { password } = req.body;
-  if (password && !isValidPassword(password)) return res.status(400).json({ message: PASSWORD_ERROR });
   try {
     const user = await getUserByPhone(phoneValue);
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
