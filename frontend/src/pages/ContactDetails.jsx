@@ -21,6 +21,7 @@ const ContactDetails = () => {
   const [draftStatus, setDraftStatus] = useState('Follow Up');
   const [draftCallStatus, setDraftCallStatus] = useState('Need to Call');
   const [draftFeedback, setDraftFeedback] = useState('');
+  const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const fetchContact = async () => {
@@ -52,6 +53,7 @@ const ContactDetails = () => {
   const showToast = (message, severity = 'success') => setSnackbar({ open: true, message, severity });
 
   const saveAll = async () => {
+    setSaving(true);
     try {
       await api.put(`/contacts/${phoneNumber}`, {
         interestedStatus: draftStatus,
@@ -59,9 +61,11 @@ const ContactDetails = () => {
         feedback: draftFeedback,
       });
       setContact((prev) => ({ ...prev, interestedStatus: draftStatus, callStatus: draftCallStatus, feedback: draftFeedback }));
-      showToast('All changes saved');
+      showToast('Saved successfully');
     } catch (error) {
       showToast(error.response?.data?.message || 'Failed to save', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -211,7 +215,7 @@ const ContactDetails = () => {
         </CardContent>
       </Card>
 
-      <Button variant="contained" size="large" fullWidth sx={{ mt: 3 }} onClick={saveAll}>Done</Button>
+      <Button variant="contained" size="large" fullWidth sx={{ mt: 3 }} onClick={saveAll} disabled={saving}>Done</Button>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 2 }}>
         <Button component="a" href={`tel:${contact.phoneNumber}`} variant="outlined" size="large" startIcon={<CallIcon />}>Call {contact.phoneNumber}</Button>
@@ -236,6 +240,11 @@ const ContactDetails = () => {
           <Button onClick={() => setEditOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={saveEdit}>Save</Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={saving} PaperProps={{ sx: { borderRadius: 3, textAlign: 'center', px: 4, py: 3 } }}>
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography fontWeight={600}>Saving...</Typography>
       </Dialog>
 
       <Snackbar open={snackbar.open} autoHideDuration={2500} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}>
